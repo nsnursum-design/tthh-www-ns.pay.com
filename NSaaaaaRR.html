@@ -1,0 +1,2964 @@
+<!DOCTYPE html>
+<html lang="bn" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>NS RR</title>
+
+  <!-- Google Fonts & Lucide Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Firebase SDKs (Auth + Realtime Database) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <style>
+    :root {
+      --primary: #ED1C24;
+      --primary-hover: #D01018;
+      --secondary: #FF4D52;
+      --accent: #FFCC00;
+      --success: #10B981;
+      --warning: #F59E0B;
+      --danger: #EF4444;
+      --bg: #F4F6F9;
+      --card-bg: #FFFFFF;
+      --card-subtle: #F9FAFB;
+      --text: #1F2937;
+      --text-muted: #6B7280;
+      --border: #E5E7EB;
+      --radius-sm: 14px;
+      --radius-md: 20px;
+      --radius-lg: 28px;
+      --radius-xl: 36px;
+    }
+
+    [data-theme="dark"] {
+      --bg: #111318;
+      --card-bg: #1B1E26;
+      --card-subtle: #232834;
+      --text: #F3F4F6;
+      --text-muted: #9CA3AF;
+      --border: #2D3342;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', 'Hind Siliguri', sans-serif;
+      background-color: #0B0D13;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: var(--text);
+    }
+
+    .app-viewport {
+      width: 100%;
+      max-width: 430px;
+      height: 100vh;
+      max-height: 932px;
+      background: var(--bg);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    @media (min-width: 440px) {
+      .app-viewport {
+        border-radius: 44px;
+        border: 9px solid #1E222D;
+        height: 94vh;
+      }
+    }
+
+    /* SPLASH SCREEN */
+    .splash-screen {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, #FF1E28 0%, #B30006 100%);
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #FFF;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+    .splash-screen.fade-out {
+      opacity: 0;
+      visibility: hidden;
+    }
+    .splash-logo-wrap {
+      width: 100px;
+      height: 100px;
+      background: #FFF;
+      border-radius: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+      animation: pulseSplash 1.5s infinite ease-in-out;
+    }
+    @keyframes pulseSplash {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+    .splash-logo-wrap img {
+      width: 70px;
+      height: 70px;
+      object-fit: contain;
+    }
+    .splash-loader {
+      width: 36px;
+      height: 36px;
+      border: 3.5px solid rgba(255,255,255,0.25);
+      border-top-color: #FFF;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-top: 32px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* AUTHENTICATION VIEW */
+    .auth-view {
+      position: absolute;
+      inset: 0;
+      background: var(--card-bg);
+      z-index: 500;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 28px;
+    }
+    .auth-logo {
+      width: 68px;
+      height: 68px;
+      margin: 0 auto 16px;
+      border-radius: 20px;
+      object-fit: contain;
+    }
+    .auth-input-group { margin-bottom: 14px; }
+    .auth-input-group label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+    .auth-input {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1.5px solid var(--border);
+      background: var(--card-subtle);
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 700;
+      outline: none;
+    }
+    .btn-google {
+      background: #FFFFFF;
+      color: #1F2937;
+      border: 1.5px solid #E5E7EB;
+      padding: 13px;
+      border-radius: 20px;
+      font-weight: 800;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      margin-top: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      transition: background 0.2s;
+    }
+    .btn-google:active { background: #f3f4f6; }
+
+    .view-container {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-bottom: 110px;
+    }
+    .view-container::-webkit-scrollbar { display: none; }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.2s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* HEADER */
+    .app-header {
+      padding: 16px 20px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg);
+    }
+    .brand-header-img {
+      height: 40px;
+      max-width: 150px;
+      object-fit: contain;
+    }
+
+    .header-actions { display: flex; gap: 8px; }
+    .icon-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    /* DRAWER MENU */
+    .drawer-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(4px);
+      z-index: 450;
+      display: none;
+    }
+    .drawer-overlay.active { display: block; }
+    .drawer-menu {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 300px;
+      background: var(--card-bg);
+      box-shadow: -4px 0 24px rgba(0,0,0,0.3);
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .drawer-overlay.active .drawer-menu { transform: translateX(0); }
+    
+    .drawer-profile-box {
+      background: var(--card-subtle);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 16px;
+      margin: 14px 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+    }
+    .drawer-avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--primary);
+    }
+    .drawer-cat-list {
+      flex: 1;
+      overflow-y: auto;
+      margin: 10px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .drawer-cat-item {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: var(--card-subtle);
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .drawer-cat-item:active { transform: scale(0.97); }
+
+    /* PROFILE MODAL */
+    .profile-modal {
+      position: absolute;
+      inset: 0;
+      background: var(--card-bg);
+      z-index: 480;
+      display: none;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 24px 20px;
+    }
+    .profile-modal.active { display: flex; }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin: 0 16px 16px;
+      border: 1px solid var(--border);
+    }
+
+    .balance-card {
+      background: var(--card-bg);
+      border-radius: var(--radius-xl);
+      padding: 24px 22px;
+      position: relative;
+      border: 1px solid var(--border);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.03);
+    }
+    .balance-label { font-size: 13px; color: var(--text-muted); font-weight: 600; }
+    .balance-amount {
+      font-size: 42px;
+      font-weight: 800;
+      margin: 4px 0 16px;
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+    .balance-amount .taka { font-size: 30px; color: var(--primary); }
+
+    .balance-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .btn-pill {
+      background: var(--primary);
+      color: #FFF;
+      border: none;
+      padding: 14px;
+      border-radius: 22px;
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(237, 28, 36, 0.25);
+    }
+    .btn-pill:active { transform: scale(0.97); }
+
+    .btn-pill-subtle {
+      background: var(--card-subtle);
+      color: var(--text);
+      box-shadow: none;
+      border: 1px solid var(--border);
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 16px;
+    }
+    .metric-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px 12px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .metric-card:active { transform: scale(0.96); }
+    .metric-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+    .metric-val { font-size: 18px; font-weight: 800; }
+    .metric-lbl { font-size: 12px; color: var(--text-muted); font-weight: 600; margin-top: 2px; }
+
+    .bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 80px;
+      background: var(--card-bg);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 50;
+    }
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .nav-item.active { color: var(--primary); }
+
+    .center-fab {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: #1B1E28;
+      color: #FFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: -30px;
+      border: 4px solid var(--bg);
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    /* ACTION SELECTOR MODAL */
+    .action-choice-sheet {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(4px);
+      z-index: 470;
+      display: none;
+      align-items: flex-end;
+    }
+    .action-choice-sheet.active { display: flex; }
+    .action-sheet-body {
+      background: var(--card-bg);
+      width: 100%;
+      border-radius: 32px 32px 0 0;
+      padding: 24px 20px 36px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      animation: slideUp 0.25s ease-out;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    .choice-card-btn {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 18px;
+      border-radius: 20px;
+      background: var(--card-subtle);
+      border: 1.5px solid var(--border);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .choice-card-btn:active {
+      transform: scale(0.98);
+      background: rgba(237, 28, 36, 0.08);
+      border-color: var(--primary);
+    }
+    .choice-card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FFF;
+    }
+
+    /* TOPUP / SEND MONEY SCREEN */
+    .topup-screen-view {
+      position: absolute;
+      inset: 0;
+      background: var(--bg);
+      color: var(--text);
+      z-index: 460;
+      display: none;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 20px;
+    }
+    .topup-screen-view.active { display: flex; }
+    .topup-input-box {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 18px;
+      margin-bottom: 14px;
+    }
+    .topup-field {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1.5px solid var(--border);
+      background: var(--card-subtle);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      outline: none;
+      margin-top: 6px;
+    }
+
+    /* RECHARGE SCREEN */
+    .recharge-screen-view {
+      position: absolute;
+      inset: 0;
+      background: #10121C;
+      color: #FFF;
+      z-index: 120;
+      display: none;
+      flex-direction: column;
+      overflow-y: auto;
+      padding-bottom: 50px;
+    }
+    .recharge-screen-view.active { display: flex; }
+    .rs-header {
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #1C2030;
+      background: #141724;
+    }
+    .rs-title { font-size: 17px; font-weight: 800; flex: 1; text-align: center; }
+
+    .rs-card {
+      background: #181C2B;
+      border-radius: 26px;
+      padding: 18px;
+      margin: 12px 16px;
+      border: 1px solid #252B42;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    }
+
+    .rs-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 800;
+      margin-bottom: 14px;
+      color: #F1F5F9;
+    }
+    .rs-label-icon {
+      width: 26px;
+      height: 26px;
+      background: #FF4757;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FFF;
+    }
+
+    .rs-number-box {
+      background: #10131F;
+      border-radius: 18px;
+      padding: 15px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid #283049;
+      margin-bottom: 10px;
+    }
+    .rs-number-box input {
+      background: transparent;
+      border: none;
+      color: #FFF;
+      font-size: 17px;
+      font-weight: 800;
+      outline: none;
+      width: 78%;
+      letter-spacing: 0.8px;
+    }
+
+    .rs-amount-box-container {
+      background: #20273B;
+      border-radius: 24px;
+      padding: 18px;
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid #2E3750;
+      position: relative;
+    }
+    .rs-quick-pills { display: flex; flex-direction: column; gap: 10px; z-index: 2; }
+    .rs-pill-btn {
+      background: #2D3752;
+      border: none;
+      color: #CBD5E1;
+      padding: 9px 18px;
+      border-radius: 14px;
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .rs-pill-btn:active { background: #ED1C24; color: #FFF; }
+    .rs-big-taka-sym { position: absolute; right: 140px; font-size: 40px; font-weight: 900; color: #475569; pointer-events: none; }
+    .rs-amt-big-input {
+      font-size: 44px;
+      font-weight: 900;
+      color: #FFFFFF;
+      background: transparent;
+      border: none;
+      text-align: right;
+      width: 140px;
+      outline: none;
+      z-index: 2;
+    }
+
+    .rs-methods-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .rs-method-pill {
+      padding: 14px 10px;
+      border-radius: 18px;
+      background: #141724;
+      border: 2px solid transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      color: #94A3B8;
+    }
+    .rs-method-pill.active {
+      background: rgba(16, 185, 129, 0.12);
+      border-color: #10B981;
+      color: #10B981;
+    }
+
+    .rs-submit-btn {
+      background: linear-gradient(135deg, #FF3D4C, #ED1C24);
+      color: #FFF;
+      border: none;
+      padding: 18px;
+      border-radius: 24px;
+      font-weight: 800;
+      font-size: 17px;
+      margin: 16px 16px 20px;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(237, 28, 36, 0.4);
+    }
+
+    .packages-below-section { padding: 0 16px 20px; }
+    .packages-category-heading {
+      font-size: 16px;
+      font-weight: 800;
+      color: #CBD5E1;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .rs-cat-scroll {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 4px 0 14px;
+      scrollbar-width: none;
+      align-items: center;
+    }
+    .rs-cat-scroll::-webkit-scrollbar { display: none; }
+
+    .rs-cat-item {
+      flex: 0 0 auto;
+      min-width: 90px;
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: #202638;
+      border-radius: 20px;
+      border: 1px solid #2E3750;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .rs-cat-item.active {
+      background: #FFFFFF !important;
+      border-color: #FFFFFF !important;
+      box-shadow: 0 6px 20px rgba(255, 255, 255, 0.25);
+      transform: translateY(-2px);
+    }
+    .rs-cat-item.active span { color: #0F172A !important; font-weight: 900; }
+    .rs-cat-item.active i { color: #ED1C24 !important; }
+
+    .home-cat-bar {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 4px 16px 12px;
+      scrollbar-width: none;
+    }
+    .home-cat-bar::-webkit-scrollbar { display: none; }
+    .home-cat-pill {
+      flex: 0 0 auto;
+      padding: 8px 16px;
+      border-radius: 16px;
+      font-size: 12.5px;
+      font-weight: 700;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .home-cat-pill.active {
+      background: var(--primary);
+      color: #FFF;
+      border-color: var(--primary);
+      box-shadow: 0 4px 14px rgba(237, 28, 36, 0.3);
+    }
+
+    .packages-list { display: flex; flex-direction: column; gap: 12px; margin-top: 4px; }
+    .package-mini-card {
+      background: #181D2C;
+      border: 1px solid #28314A;
+      border-radius: 20px;
+      padding: 16px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .package-mini-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #ED1C24; }
+    .package-mini-title { font-size: 16px; font-weight: 800; color: #FFF; }
+    .package-mini-sub { font-size: 12px; color: #94A3B8; font-weight: 600; margin-top: 4px; }
+    .package-mini-price {
+      font-size: 17px;
+      font-weight: 800;
+      color: #38BDF8;
+      background: rgba(56, 189, 248, 0.12);
+      padding: 6px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(56, 189, 248, 0.25);
+    }
+
+    /* GATEWAY SCREEN */
+    .gateway-screen-view {
+      position: absolute;
+      inset: 0;
+      background: #FFFFFF;
+      color: #1F2937;
+      z-index: 300;
+      display: none;
+      flex-direction: column;
+      overflow-y: auto;
+      padding-bottom: 40px;
+    }
+    .gateway-screen-view.active { display: flex; }
+    .gw-navbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid #F1F5F9; }
+    .gw-banner { padding: 16px 20px; border-radius: 0 0 24px 24px; display: flex; justify-content: space-between; align-items: center; color: #000; }
+    
+    .gw-theme-nagad .gw-banner { background: #F59E0B; color: #000; }
+    .gw-theme-bkash .gw-banner { background: #D12053; color: #FFF; }
+    .gw-theme-rocket .gw-banner { background: #8C197A; color: #FFF; }
+    .gw-theme-upay .gw-banner { background: #004B9B; color: #FFF; }
+
+    .gw-brand-bar { display: flex; justify-content: space-between; align-items: center; padding: 24px 20px 10px; }
+    .gw-logo-left { font-size: 30px; font-weight: 900; font-style: italic; }
+    .gw-method-badge { display: flex; align-items: center; gap: 8px; font-weight: 800; }
+    .gw-step-box { padding: 14px 20px; display: flex; gap: 16px; align-items: flex-start; }
+    .gw-step-num { font-size: 54px; font-weight: 900; color: #CBD5E1; line-height: 0.9; }
+
+    .gw-wallet-card {
+      background: #F1F5F9;
+      border: 2px dashed #CBD5E1;
+      border-radius: 18px;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .gw-wallet-card:active {
+      transform: scale(0.98);
+      background: #E2E8F0;
+      border-color: #94A3B8;
+    }
+    .copy-btn-bubble {
+      width: 42px;
+      height: 42px;
+      background: #FFF;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      border: 1px solid #E2E8F0;
+      transition: all 0.2s;
+    }
+    
+    .gw-alert-warning { margin: 10px 20px; padding: 12px 14px; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 14px; display: flex; align-items: center; gap: 10px; color: #D97706; font-size: 13px; font-weight: 700; }
+    
+    .gw-txnid-box { margin: 10px 20px; border-radius: 24px; padding: 20px; color: #FFF; background: #F59E0B; }
+    .gw-theme-bkash .gw-txnid-box { background: #D12053; }
+    .gw-theme-rocket .gw-txnid-box { background: #8C197A; }
+    .gw-theme-upay .gw-txnid-box { background: #004B9B; }
+
+    .gw-txn-input-wrap { background: #FFF; border-radius: 16px; padding: 10px 16px; display: flex; align-items: center; margin-top: 14px; }
+    .gw-txn-input-wrap input { border: none; outline: none; width: 100%; font-size: 17px; font-weight: 700; color: #111; }
+    
+    .gw-actions-row { display: flex; gap: 14px; padding: 20px; }
+    .gw-btn-cancel { flex: 1; padding: 16px; border-radius: 18px; border: 1.5px solid #CBD5E1; background: #FFF; font-weight: 800; color: #334155; cursor: pointer; }
+    .gw-btn-confirm { flex: 1; padding: 16px; border-radius: 18px; border: none; background: #ED1C24; color: #FFF; font-weight: 800; cursor: pointer; }
+
+    /* MULTI-STEP CONFIRMATION POPUP */
+    .purchase-dialog-modal {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(5px);
+      z-index: 280;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .purchase-dialog-modal.active { display: flex; }
+    .purchase-dialog-card {
+      background: var(--card-bg);
+      border-radius: 28px;
+      width: 100%;
+      padding: 26px 20px;
+      border: 1px solid var(--border);
+      text-align: center;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.3);
+    }
+    .pd-icon { width: 58px; height: 58px; border-radius: 50%; margin: 0 auto 14px; display: flex; align-items: center; justify-content: center; }
+    .pd-icon.confirm-state { background: rgba(237, 28, 36, 0.12); color: var(--primary); }
+    .pd-icon.success-state { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+    .pd-title { font-size: 19px; font-weight: 800; color: var(--text); }
+    .pd-subtitle { font-size: 14px; color: var(--text-muted); margin: 8px 0 18px; line-height: 1.5; }
+    .pd-info-box { background: var(--card-subtle); border-radius: 16px; padding: 14px; margin-bottom: 20px; border: 1px solid var(--border); text-align: left; }
+    .pd-info-row { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+    
+    .pd-buttons-group { display: flex; gap: 10px; }
+    .btn-cancel { flex: 1; padding: 12px; border-radius: 16px; border: 1.5px solid var(--border); background: var(--card-subtle); color: var(--text); font-weight: 800; cursor: pointer; }
+    .btn-confirm { flex: 1; padding: 12px; border-radius: 16px; border: none; background: var(--primary); color: #FFF; font-weight: 800; cursor: pointer; }
+
+    /* ============================================================== */
+    /* ========= REALTIME BKASH INBOX / HISTORY UI STYLES =========== */
+    /* ============================================================== */
+    .history-modal {
+      position: absolute;
+      inset: 0;
+      background: #F8F9FA;
+      z-index: 250;
+      display: none;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+    .history-modal.active { display: flex; }
+
+    /* 1. Header Bar */
+    .bk-inbox-header {
+      background: #D12053;
+      color: #FFFFFF;
+      padding: 16px 20px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .bk-inbox-header h2 {
+      font-size: 19px;
+      font-weight: 800;
+      text-align: center;
+      flex: 1;
+    }
+
+    /* 2. Dual Tabs */
+    .bk-inbox-nav {
+      background: #FFFFFF;
+      display: flex;
+      border-bottom: 1.5px solid #E5E7EB;
+    }
+    .bk-inbox-tab {
+      flex: 1;
+      text-align: center;
+      padding: 13px 0;
+      font-size: 14px;
+      font-weight: 800;
+      color: #6B7280;
+      cursor: pointer;
+      position: relative;
+    }
+    .bk-inbox-tab.active {
+      color: #D12053;
+    }
+    .bk-inbox-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 10%;
+      right: 10%;
+      height: 3px;
+      background: #D12053;
+      border-radius: 4px 4px 0 0;
+    }
+
+    /* 3. Search Bar + Filter */
+    .bk-search-section {
+      background: #FFFFFF;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid #EEF2F6;
+    }
+    .bk-search-input-box {
+      flex: 1;
+      background: #FFFFFF;
+      border: 1.5px solid #D1D5DB;
+      border-radius: 12px;
+      padding: 9px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .bk-search-input-box input {
+      border: none;
+      background: transparent;
+      outline: none;
+      width: 100%;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #1F2937;
+    }
+    .bk-filter-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 14px;
+      border-radius: 12px;
+      border: 1.5px solid #D1D5DB;
+      background: #FFFFFF;
+      color: #9333EA;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .bk-section-label {
+      padding: 12px 16px 8px;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #6B7280;
+    }
+
+    /* 4. Transactions List Items */
+    .bk-txn-list {
+      display: flex;
+      flex-direction: column;
+      background: #FFFFFF;
+    }
+    .bk-txn-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid #F3F4F6;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .bk-txn-row:active {
+      background: #FFF1F2;
+    }
+    .bk-txn-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .bk-circle-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 17px;
+      color: #FFF;
+      flex-shrink: 0;
+    }
+    .bk-circle-purple { background: #B47EB4; }
+    .bk-circle-olive { background: #A3A354; }
+    .bk-circle-cyan { background: #55B4B4; }
+    .bk-circle-green { background: #10B981; }
+
+    .bk-txn-details {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .bk-txn-title {
+      font-size: 14.5px;
+      font-weight: 800;
+      color: #1F2937;
+    }
+    .bk-txn-sub {
+      font-size: 13px;
+      color: #4B5563;
+      font-weight: 600;
+    }
+    .bk-txn-id-sub {
+      font-size: 12px;
+      color: #6B7280;
+      font-weight: 600;
+    }
+
+    .bk-txn-right {
+      text-align: right;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+    }
+    .bk-amt-debit {
+      font-size: 16px;
+      font-weight: 800;
+      color: #DC2626; /* লাল */
+    }
+    .bk-amt-credit {
+      font-size: 16px;
+      font-weight: 800;
+      color: #059669; /* সবুজ */
+    }
+    .bk-txn-time {
+      font-size: 11px;
+      color: #6B7280;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* 5. BOTTOM SLIP MODAL */
+    .bk-slip-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(2px);
+      z-index: 290;
+      display: none;
+      align-items: flex-end;
+    }
+    .bk-slip-overlay.active { display: flex; }
+    .bk-slip-card {
+      background: #FFFFFF;
+      width: 100%;
+      border-radius: 24px 24px 0 0;
+      padding: 18px 20px 24px;
+      animation: slideUpSlip 0.22s ease-out;
+    }
+    @keyframes slideUpSlip {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    .bk-slip-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 12px;
+      border-bottom: 1.5px solid #F3F4F6;
+    }
+    .bk-slip-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #1F2937;
+    }
+    .bk-slip-close-txt {
+      color: #D12053;
+      font-weight: 800;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .bk-slip-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px 14px;
+      padding: 16px 0 20px;
+      border-bottom: 1px solid #F3F4F6;
+    }
+    .bk-slip-item {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .bk-slip-lbl {
+      font-size: 12px;
+      font-weight: 700;
+      color: #6B7280;
+    }
+    .bk-slip-val {
+      font-size: 14.5px;
+      font-weight: 800;
+      color: #111827;
+      word-break: break-all;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .bk-slip-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .bk-slip-btn {
+      flex: 1;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1.5px solid #D12053;
+      background: #FFFFFF;
+      color: #D12053;
+      font-size: 14px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    /* UID COPY BADGE */
+    .uid-badge-click {
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: opacity 0.2s;
+    }
+    .uid-badge-click:active { opacity: 0.7; }
+
+    .toast {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: #111827;
+      color: #FFF;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-size: 13px;
+      font-weight: 700;
+      z-index: 2000;
+      transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      max-width: 90%;
+      text-align: center;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+  <div class="app-viewport">
+
+    <!-- 1. SPLASH SCREEN -->
+    <div class="splash-screen" id="appSplashScreen">
+      <div class="splash-logo-wrap">
+        <img src="https://i.supaimg.com/12d6d834-fa31-458b-b65a-26b1fb11f3c2/03ff80fb-fd92-4f22-a6e3-60c9a7392d66.png" alt="App Logo" id="splashLogoImg">
+      </div>
+      <div class="splash-loader"></div>
+      <span style="margin-top: 16px; font-size: 14px; font-weight: 700; letter-spacing: 0.5px;">Firebase সংযোগ হচ্ছে...</span>
+    </div>
+
+    <!-- 2. AUTHENTICATION -->
+    <div class="auth-view" id="authScreen">
+      <img src="https://i.supaimg.com/12d6d834-fa31-458b-b65a-26b1fb11f3c2/03ff80fb-fd92-4f22-a6e3-60c9a7392d66.png" alt="Logo" class="auth-logo" id="authLogoImg">
+      <h2 style="font-size: 22px; font-weight: 800; text-align: center; margin-bottom: 6px;">স্বাগতম</h2>
+      <p style="font-size: 13px; color: var(--text-muted); text-align: center; margin-bottom: 24px;">লগইন করতে মোবাইল নম্বর বা Google ব্যবহার করুন</p>
+
+      <div class="auth-input-group">
+        <label>মোবাইল নম্বর (যেমন: 018XXXXXXXX)</label>
+        <div style="display: flex; gap: 8px;">
+          <input type="tel" id="authPhoneNumber" class="auth-input" placeholder="+88018XXXXXXXX" value="+880">
+          <button class="btn-pill" id="btnSendOtp" style="white-space: nowrap; padding: 0 16px; border-radius: 16px;" onclick="sendFirebaseOtp()">OTP দিন</button>
+        </div>
+      </div>
+
+      <div class="auth-input-group" id="otpSection" style="display: none;">
+        <label>SMS-এ আসা OTP কোড দিন</label>
+        <input type="number" id="authOtpCode" class="auth-input" placeholder="৬ ডিজিটের কোড">
+        <button class="btn-pill" id="btnVerifyOtp" style="width: 100%; margin-top: 10px;" onclick="verifyFirebaseOtp()">ভেরিফাই ও প্রবেশ করুন</button>
+      </div>
+
+      <div id="recaptcha-container"></div>
+
+      <div style="display: flex; align-items: center; gap: 10px; margin: 18px 0;">
+        <div style="flex:1; height: 1px; background: var(--border);"></div>
+        <span style="font-size: 12px; color: var(--text-muted);">অথবা</span>
+        <div style="flex:1; height: 1px; background: var(--border);"></div>
+      </div>
+
+      <button class="btn-google" onclick="loginWithGoogle()">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        <span>Google দিয়ে লগইন করুন</span>
+      </button>
+    </div>
+
+    <!-- HEADER -->
+    <header class="app-header">
+      <div class="brand-group">
+        <img id="appHeaderLogo" src="https://i.supaimg.com/12d6d834-fa31-458b-b65a-26b1fb11f3c2/03ff80fb-fd92-4f22-a6e3-60c9a7392d66.png" alt="Logo" class="brand-header-img">
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" onclick="toggleTheme()" title="Theme Toggle">
+          <i data-lucide="moon" style="width: 18px; height: 18px;"></i>
+        </button>
+        <button class="icon-btn" onclick="openDrawerMenu()" title="Menu">
+          <i data-lucide="more-vertical" style="width: 20px; height: 20px; color: var(--primary);"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- 3-DOT SIDE DRAWER MENU -->
+    <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawerMenu(event)">
+      <div class="drawer-menu" onclick="event.stopPropagation()">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h3 style="font-size: 18px; font-weight: 800;">মেনু</h3>
+          <i data-lucide="x" style="cursor: pointer;" onclick="closeDrawerMenu()"></i>
+        </div>
+
+        <div class="drawer-profile-box" onclick="openProfileModal()">
+          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" id="drawerAvatarImg" class="drawer-avatar">
+          <div style="flex:1; overflow:hidden;">
+            <div style="font-weight: 800; font-size: 15px; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;" id="drawerUserName">ব্যবহারকারী</div>
+            <div style="font-size: 12px; color: var(--text-muted); white-space:nowrap; text-overflow:ellipsis; overflow:hidden;" id="drawerUserPhone">+৮৮০...</div>
+            <div style="font-size: 11px; color: #10B981; font-weight: 800; margin-top:2px;">UID: <span id="drawerUserUid">লোড হচ্ছে...</span></div>
+          </div>
+        </div>
+
+        <div style="font-size: 13px; font-weight: 800; color: var(--text-muted); margin-top: 10px;">ক্যাটাগরি সমূহ</div>
+        <div class="drawer-cat-list" id="drawerCategoryList"></div>
+
+        <div style="border-top: 1px solid var(--border); padding-top: 14px;">
+          <div class="drawer-cat-item" onclick="openProfileModal()">
+            <i data-lucide="user" style="width: 18px; height: 18px;"></i>
+            <span>আমার প্রোফাইল (Profile & PIN)</span>
+          </div>
+          <div class="drawer-cat-item" style="color: var(--danger); margin-top: 6px;" onclick="userLogout()">
+            <i data-lucide="log-out" style="width: 18px; height: 18px;"></i>
+            <span>লগআউট (Logout)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROFILE EDIT MODAL -->
+    <div class="profile-modal" id="profileModal">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <h2 style="font-size: 20px; font-weight: 800;">প্রোফাইল সেটিংস</h2>
+        <i data-lucide="x" style="cursor: pointer;" onclick="closeProfileModal()"></i>
+      </div>
+
+      <div style="background: rgba(237, 28, 36, 0.08); padding: 14px 18px; border-radius: 18px; margin-bottom: 16px; border: 1.5px dashed var(--primary); display: flex; justify-content: space-between; align-items:center;">
+        <div>
+          <span style="font-size: 13px; font-weight: 700; display:block;">আপনার সংখ্যাযুক্ত UID:</span>
+          <small style="font-size: 11px; color: var(--text-muted);">কপি করতে ট্যাপ করুন</small>
+        </div>
+        <div class="uid-badge-click" onclick="copyUserUID()" title="ক্লিক করে UID কপি করুন">
+          <span id="profUidDisp" style="font-weight: 900; color: var(--primary); font-size:16px; letter-spacing: 1px;">...</span>
+          <i data-lucide="copy" style="width: 15px; height: 15px; color: var(--primary);"></i>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-bottom: 20px;">
+        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" id="editAvatarPreview" style="width: 84px; height: 84px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary); margin-bottom: 10px;">
+      </div>
+
+      <div class="auth-input-group">
+        <label>আপনার পুরো নাম</label>
+        <input type="text" id="profName" class="auth-input" placeholder="নাম লিখুন">
+      </div>
+
+      <div class="auth-input-group">
+        <label>মোবাইল নম্বর (টপ-আপ এর জন্য)</label>
+        <input type="tel" id="profPhone" class="auth-input" placeholder="018XXXXXXXX">
+      </div>
+
+      <div class="auth-input-group">
+        <label style="color: var(--primary); font-weight:800;">৪ ডিজিটের নিজস্ব সিকিউরিটি পিন (Security PIN)</label>
+        <input type="password" id="profPin" maxlength="4" class="auth-input" placeholder="যেমন: 1234">
+        <small style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 4px;">সবার পিন এক হলেও কোনো সমস্যা নেই, পিনটি নিরাপদ থাকবে।</small>
+      </div>
+
+      <div class="auth-input-group">
+        <label>ইমেইল</label>
+        <input type="email" id="profEmail" class="auth-input" placeholder="example@gmail.com">
+      </div>
+
+      <div class="auth-input-group">
+        <label>প্রোফাইল ছবির লিংক (Image URL)</label>
+        <input type="text" id="profAvatarUrl" class="auth-input" placeholder="https://..." oninput="document.getElementById('editAvatarPreview').src=this.value">
+      </div>
+
+      <button class="btn-pill" style="width: 100%; margin-top: 14px;" onclick="saveUserProfile()">তথ্য ও পিন সংরক্ষণ করুন</button>
+    </div>
+
+    <!-- MAIN VIEWS -->
+    <div class="view-container">
+
+      <!-- ================= 1. HOME TAB ================= -->
+      <section id="tab-home" class="tab-content active">
+        <div style="padding: 6px 20px 14px; display: flex; justify-content: space-between; align-items: center;">
+          <div style="max-width: 75%; overflow: hidden;">
+            <span style="font-size: 13px; color: var(--text-muted); font-weight: 600;">স্বাগতম 👋</span>
+            <h2 style="font-size: 19px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="user-mobile-display">ব্যবহারকারী</h2>
+          </div>
+          <div style="background: rgba(16, 185, 129, 0.15); color: var(--success); font-weight: 800; font-size: 11px; padding: 4px 10px; border-radius: 20px;">
+            ● Active
+          </div>
+        </div>
+
+        <!-- Balance Card -->
+        <div style="padding: 0 16px;">
+          <div class="balance-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span class="balance-label">কারেন্ট ব্যালান্স</span>
+              <div class="uid-badge-click" onclick="copyUserUID()" title="ক্লিক করে UID কপি করুন" style="font-size: 13px; font-weight: 800; color: #10B981; background: rgba(16, 185, 129, 0.1); padding: 4px 10px; border-radius: 12px;">
+                <span id="homeUidBadge">UID: ...</span>
+                <i data-lucide="copy" style="width: 12px; height: 12px; margin-left: 2px;"></i>
+              </div>
+            </div>
+            <div class="balance-amount">
+              <span class="taka">৳</span>
+              <span id="disp-balance">0.00</span>
+            </div>
+            
+            <div class="balance-actions">
+              <button class="btn-pill" onclick="openActionChoiceSheet()">
+                <i data-lucide="plus-circle" style="width: 18px; height: 18px;"></i>
+                <span>রিচার্জ</span>
+              </button>
+              <button class="btn-pill btn-pill-subtle" onclick="openHistoryModal()">
+                <i data-lucide="history" style="width: 18px; height: 18px; color: var(--primary);"></i>
+                <span>হিস্ট্রি</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metrics Grid -->
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-icon" style="background: rgba(237, 28, 36, 0.1); color: var(--primary);">
+              <i data-lucide="globe" style="width: 18px; height: 18px;"></i>
+            </div>
+            <div class="metric-val"><span id="disp-data">0</span> <small style="font-size: 11px;">GB</small></div>
+            <div class="metric-lbl">ইন্টারনেট</div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-icon" style="background: #E0F2FE; color: #0284C7;">
+              <i data-lucide="phone-call" style="width: 18px; height: 18px;"></i>
+            </div>
+            <div class="metric-val"><span id="disp-min">0</span> <small style="font-size: 11px;">Min</small></div>
+            <div class="metric-lbl">মিনিট</div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-icon" style="background: #FEF3C7; color: var(--accent);">
+              <i data-lucide="award" style="width: 18px; height: 18px;"></i>
+            </div>
+            <div class="metric-val" id="disp-points">0</div>
+            <div class="metric-lbl">এলিট পয়েন্ট</div>
+          </div>
+        </div>
+
+        <!-- SPECIAL OFFERS & HOME CATEGORY BAR -->
+        <div style="padding: 10px 20px 4px; display: flex; justify-content: space-between; align-items: center;">
+          <h3 style="font-size: 17px; font-weight: 800;">অফার ও স্পেশাল প্যাক সমূহ</h3>
+          <span style="font-size: 12px; color: var(--primary); font-weight: 700; cursor: pointer;" onclick="switchTab('deals')">সব দেখুন →</span>
+        </div>
+
+        <div class="home-cat-bar" id="homeCategoryFilterBar"></div>
+        <div id="home-dynamic-packages" style="padding: 0 16px;"></div>
+      </section>
+
+      <!-- ================= 2. DEALS TAB ================= -->
+      <section id="tab-deals" class="tab-content">
+        <div style="padding: 10px 20px 6px;">
+          <h2 style="font-size: 20px; font-weight: 800;">অফার ও বান্ডেল শপ 🛒</h2>
+          <span style="font-size: 13px; color: var(--text-muted); font-weight: 600;">পছন্দ অনুযায়ী প্যাক কিনুন</span>
+        </div>
+        <div style="padding: 0 16px;">
+          <div class="rs-cat-scroll" id="dealsCategoryBar"></div>
+        </div>
+        <div id="deals-full-container" style="padding: 0 16px; margin-top: 10px;"></div>
+      </section>
+
+      <!-- ================= 3. DISCOVER TAB ================= -->
+      <section id="tab-discover" class="tab-content">
+        <div style="padding: 10px 20px 14px;">
+          <h2 style="font-size: 20px; font-weight: 800;">ডিসকভার (ভিডিও ও ওয়েবসাইট) 🌐</h2>
+        </div>
+        <div id="discoverItemsContainer" style="padding: 0 16px;"></div>
+      </section>
+
+      <!-- ================= 4. SHOP TAB ================= -->
+      <section id="tab-shop" class="tab-content">
+        <div style="padding: 10px 20px 14px;">
+          <h2 style="font-size: 20px; font-weight: 800;">ডিভাইস শপ ও গ্যাজেট 🛍️</h2>
+        </div>
+        <div id="shopItemsContainer" style="padding: 0 16px;"></div>
+      </section>
+
+    </div>
+
+    <!-- ACTION SELECTOR BOTTOM SHEET -->
+    <div class="action-choice-sheet" id="actionChoiceSheet" onclick="closeActionChoiceSheet(event)">
+      <div class="action-sheet-body" onclick="event.stopPropagation()">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <h3 style="font-size: 18px; font-weight: 800;">অপশন নির্বাচন করুন</h3>
+          <i data-lucide="x" style="cursor: pointer;" onclick="closeActionChoiceSheet()"></i>
+        </div>
+
+        <div class="choice-card-btn" onclick="selectChoiceAction('recharge')">
+          <div class="choice-card-icon" style="background: linear-gradient(135deg, #FF4757, #ED1C24);">
+            <i data-lucide="wallet" style="width: 24px; height: 24px;"></i>
+          </div>
+          <div style="flex:1;">
+            <div style="font-weight: 800; font-size: 16px;">১. রিচার্জ (Recharge)</div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">বিকাশ, নগদ, রকেটের মাধ্যমে টাকা রিচার্জ করুন</div>
+          </div>
+        </div>
+
+        <div class="choice-card-btn" onclick="selectChoiceAction('topup')">
+          <div class="choice-card-icon" style="background: linear-gradient(135deg, #10B981, #059669);">
+            <i data-lucide="send" style="width: 24px; height: 24px;"></i>
+          </div>
+          <div style="flex:1;">
+            <div style="font-weight: 800; font-size: 16px;">২. টপ-আপ (টাকা পাঠান / লেনদেন)</div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">UID বা নাম্বারে সরাসরি ব্যালেন্স ট্রান্সফার করুন</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOP-UP / P2P TRANSFER VIEW -->
+    <div class="topup-screen-view" id="topupScreen">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+        <i data-lucide="chevron-left" style="width: 28px; height: 28px; cursor: pointer;" onclick="closeTopupScreen()"></i>
+        <h2 style="font-size: 18px; font-weight: 800;">টাকা লেনদেন / Top-up</h2>
+        <div style="width: 28px;"></div>
+      </div>
+
+      <div class="topup-input-box">
+        <label style="font-size: 13px; font-weight: 700; color: var(--text-muted);">প্রাপকের UID নম্বর অথবা মোবাইল নম্বর</label>
+        <input type="text" id="topupReceiverInput" class="topup-field" placeholder="যেমন: 84920184 অথবা 018XXXXXXXX">
+        <small style="font-size: 11px; color: #10B981; font-weight: 700; margin-top: 4px; display: block;">৮-১০ ডিজিটের সংখ্যাযুক্ত UID বা মোবাইল দিন</small>
+      </div>
+
+      <div class="topup-input-box">
+        <label style="font-size: 13px; font-weight: 700; color: var(--text-muted);">কত টাকা পাঠাবেন (Amount)</label>
+        <input type="number" id="topupAmount" class="topup-field" placeholder="টাকার পরিমাণ লিখুন">
+      </div>
+
+      <div class="topup-input-box">
+        <label style="font-size: 13px; font-weight: 700; color: var(--primary);">আপনার ৪ ডিজিট পিন (PIN Code)</label>
+        <input type="password" id="topupPin" maxlength="4" class="topup-field" placeholder="••••">
+      </div>
+
+      <button class="btn-pill" style="width: 100%; padding: 16px; font-size: 16px; margin-top: 10px;" onclick="executeTopupTransfer()">Confirm (নিশ্চিত করুন)</button>
+    </div>
+
+    <!-- RECHARGE SCREEN -->
+    <div class="recharge-screen-view" id="rechargeScreen">
+      <div class="rs-header">
+        <i data-lucide="chevron-left" style="width: 28px; height: 28px; cursor: pointer;" onclick="closeRechargeScreen()"></i>
+        <div class="rs-title">রিচার্জ ও প্যাক ক্রয়</div>
+        <div style="width: 28px;"></div>
+      </div>
+
+      <div class="rs-card">
+        <div class="rs-label">
+          <div class="rs-label-icon"><i data-lucide="smartphone" style="width: 14px; height: 14px;"></i></div>
+          <span>মোবাইল নম্বর</span>
+        </div>
+        <div class="rs-number-box">
+          <input type="tel" id="rcMobileInput" class="recharge-mobile-num" value="" placeholder="নম্বর দিন" />
+          <i data-lucide="user" style="width: 20px; height: 20px; color: #94A3B8;"></i>
+        </div>
+      </div>
+
+      <div class="rs-card">
+        <div class="rs-label">
+          <div class="rs-label-icon" style="background: #F43F5E;">৳</div>
+          <span>টাকার পরিমাণ লিখুন</span>
+        </div>
+        <div class="rs-amount-box-container">
+          <div class="rs-quick-pills">
+            <button class="rs-pill-btn" onclick="setRsAmt(50)">৳ ৫০</button>
+            <button class="rs-pill-btn" onclick="setRsAmt(100)">৳ ১০০</button>
+            <button class="rs-pill-btn" onclick="setRsAmt(500)">৳ ৫০০</button>
+          </div>
+          <div class="rs-big-taka-sym">৳</div>
+          <input type="number" class="rs-amt-big-input" id="rs-big-amt" placeholder="100" />
+        </div>
+      </div>
+
+      <div class="rs-card">
+        <div class="rs-label">
+          <div class="rs-label-icon" style="background: #E11D48;"><i data-lucide="credit-card" style="width: 14px; height: 14px;"></i></div>
+          <span>পেমেন্ট মেথডস</span>
+        </div>
+        <div class="rs-methods-grid">
+          <div class="rs-method-pill active" id="pay-bkash" onclick="selectPaymentMethod('bkash')">
+            <span>বিকাশ</span>
+            <i data-lucide="check-circle-2" style="width: 15px; height: 15px;"></i>
+          </div>
+          <div class="rs-method-pill" id="pay-nagad" onclick="selectPaymentMethod('nagad')">
+            <span>নগদ</span>
+          </div>
+          <div class="rs-method-pill" id="pay-rocket" onclick="selectPaymentMethod('rocket')">
+            <span>রকেট</span>
+          </div>
+          <div class="rs-method-pill" id="pay-upay" onclick="selectPaymentMethod('upay')">
+            <span>উপায়</span>
+          </div>
+        </div>
+      </div>
+
+      <button class="rs-submit-btn" onclick="proceedToPaymentGateway()">রিচার্জ সম্পন্ন করুন</button>
+
+      <div class="packages-below-section">
+        <div class="packages-category-heading">
+          <span id="category-heading-title">প্যাকেজ সমূহ</span>
+          <span style="font-size: 12px; color: #94A3B8; font-weight: 600;">ট্যাপ করে সিলেক্ট করুন</span>
+        </div>
+        <div class="rs-cat-scroll" id="dynamicCategoryBar"></div>
+        <div class="packages-list" id="categoryPackagesPreview"></div>
+      </div>
+    </div>
+
+    <!-- PAYMENT GATEWAY SCREEN -->
+    <div class="gateway-screen-view" id="paymentGatewayScreen">
+      <div class="gw-navbar">
+        <i data-lucide="arrow-left" style="width: 24px; height: 24px; cursor: pointer;" onclick="closePaymentGateway()"></i>
+        <div class="gw-nav-title">Account deposits</div>
+        <i data-lucide="rotate-cw" style="width: 20px; height: 20px; color: #F59E0B; cursor: pointer;"></i>
+      </div>
+
+      <div class="gw-banner">
+        <div class="gw-banner-amount" id="gw-disp-amount">BDT 0.00</div>
+        <div class="gw-banner-time">Time left <span id="gw-timer">59:31</span></div>
+      </div>
+
+      <div class="gw-brand-bar">
+        <div class="gw-logo-left" id="gw-main-logo">ROBI <span>PAY</span></div>
+        <div class="gw-method-badge" id="gw-method-label">
+          <i data-lucide="send" style="width: 24px; height: 24px;"></i>
+          <span id="gw-method-name">নগদ</span>
+        </div>
+      </div>
+
+      <div class="gw-step-box">
+        <div class="gw-step-num">1</div>
+        <div style="flex: 1;">
+          <div style="font-size: 14px; font-weight: 700; color: #475569;">Agent Wallet No</div>
+          <div style="font-size: 13px; font-weight: 800; color: #000; margin: 2px 0 6px;">এই নাম্বারে শুধুমাত্র ক্যাশআউট গ্রহণ করা হয়</div>
+          
+          <div class="gw-wallet-card" onclick="copyAgentNumber()" title="ক্লিক করে নম্বর কপি করুন">
+            <span class="gw-wallet-num" id="gw-agent-number" style="font-weight: 900; font-size: 20px; letter-spacing: 1px; color: #0F172A;">লোড হচ্ছে...</span>
+            <div class="copy-btn-bubble" id="copyBubble">
+              <i data-lucide="copy" id="copyIconEl" style="width: 20px; height: 20px; color: #475569;"></i>
+            </div>
+          </div>
+          <span style="font-size: 11px; color: var(--success); font-weight: 800; display: block; margin-top: 4px;">নম্বরের উপর চাপ দিয়ে কপি করুন 👆</span>
+        </div>
+      </div>
+
+      <div class="gw-alert-warning">
+        <i data-lucide="alert-triangle" style="width: 22px; height: 22px; flex-shrink: 0;"></i>
+        <span id="gw-alert-text">টাকা পাঠানোর পর নিচের বক্সে TxnID দিন</span>
+      </div>
+
+      <div class="gw-txnid-box">
+        <div style="display: flex; gap: 14px;">
+          <div class="gw-step-num" style="color: rgba(255,255,255,0.4);">2</div>
+          <div style="flex: 1;">
+            <div style="font-size: 14px; font-weight: 800;">Transaction ID</div>
+            <div style="font-size: 12px; line-height: 1.5; margin-top: 4px; opacity: 0.95;">
+              <span id="gw-step2-provider">NAGAD</span> অ্যাপ থেকে লেনদেন (TxnID) কপি করে পেস্ট করুন।
+            </div>
+            <div class="gw-txn-input-wrap">
+              <input type="text" id="gw-txnid-input" placeholder="ex. 72SDA3GH" />
+              <i data-lucide="alert-circle" style="width: 20px; height: 20px; color: #111;"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="gw-actions-row">
+        <button class="gw-btn-cancel" onclick="closePaymentGateway()">Cancel</button>
+        <button class="gw-btn-confirm" onclick="submitRechargeRequestToAdmin()">Confirm</button>
+      </div>
+    </div>
+
+    <!-- PURCHASE CONFIRMATION POPUP -->
+    <div class="purchase-dialog-modal" id="purchaseDialogModal">
+      <div class="purchase-dialog-card">
+        <div id="pd-step-confirm">
+          <div class="pd-icon confirm-state">
+            <i data-lucide="help-circle" style="width: 32px; height: 32px;"></i>
+          </div>
+          <h3 class="pd-title">প্যাক নিশ্চিতকরণ</h3>
+          <p class="pd-subtitle">আপনি কি নিচের প্যাকেজটি সক্রিয় করতে চান?</p>
+          <div class="pd-info-box">
+            <div class="pd-info-row"><span>প্যাকেজ:</span><span id="pd-info-name">-</span></div>
+            <div class="pd-info-row"><span>মেয়াদ:</span><span id="pd-info-val">-</span></div>
+            <div class="pd-info-row"><span>মূল্য:</span><span id="pd-info-price" style="color:var(--primary); font-size:15px;">-</span></div>
+          </div>
+          <div class="pd-buttons-group">
+            <button class="btn-cancel" onclick="cancelPurchaseFlow()">Cancel</button>
+            <button class="btn-confirm" onclick="proceedToStepOk()">Confirm</button>
+          </div>
+        </div>
+
+        <div id="pd-step-ok" style="display: none;">
+          <div class="pd-icon confirm-state" style="background: rgba(59, 130, 246, 0.15); color: #2563EB;">
+            <i data-lucide="check-circle" style="width: 32px; height: 32px;"></i>
+          </div>
+          <h3 class="pd-title">লেনদেন প্রক্রিয়া প্রস্তুত</h3>
+          <p class="pd-subtitle">ব্যালেন্স থেকে টাকা কেটে অফার চালু করতে OK চাপুন।</p>
+          <button class="btn-pill" style="width: 100%; font-size: 16px; padding: 14px;" onclick="executePurchaseStepSuccess()">OK (ঠিক আছে)</button>
+        </div>
+
+        <div id="pd-step-success" style="display: none;">
+          <div class="pd-icon success-state">
+            <i data-lucide="shield-check" style="width: 34px; height: 34px;"></i>
+          </div>
+          <h3 class="pd-title" style="color: var(--success);">Successful! সফল হয়েছে</h3>
+          <p class="pd-subtitle" id="pd-success-sub">প্যাকেজটি সক্রিয় করা হয়েছে।</p>
+          <div style="background: #FEF3C7; border: 1px solid #FDE68A; border-radius: 16px; padding: 12px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <i data-lucide="award" style="width: 20px; height: 20px; color: var(--accent);"></i>
+            <span style="font-size: 13px; font-weight: 800; color: #92400E;" id="pd-success-points">+১০ পয়েন্ট</span>
+          </div>
+          <button class="btn-pill" style="width: 100%; font-size: 15px; padding: 15px; background: #111827;" onclick="goToHomePageFromSuccess()">হোম পেজ</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- ======== NEW BKASH INBOX / HISTORY MODAL (SCREENSHOT) ======== -->
+    <!-- ============================================================== -->
+    <div class="history-modal" id="historyModal">
+      <!-- 1. Header Bar -->
+      <div class="bk-inbox-header">
+        <i data-lucide="arrow-left" style="cursor: pointer; width: 24px; height: 24px;" onclick="closeHistoryModal()"></i>
+        <h2>ইনবক্স</h2>
+        <svg style="width: 26px; height: 26px; fill: white;" viewBox="0 0 24 24">
+          <path d="M12 2L15 8L22 9L17 14L18 21L12 18L6 21L7 14L2 9L9 8L12 2Z"/>
+        </svg>
+      </div>
+
+      <!-- 2. Dual Tabs -->
+      <div class="bk-inbox-nav">
+        <div class="bk-inbox-tab active" id="tabNavTxn" onclick="switchInboxTab('txn')">লেনদেনসমূহ</div>
+        <div class="bk-inbox-tab" id="tabNavNotif" onclick="switchInboxTab('notif')">নোটিফিকেশন</div>
+      </div>
+
+      <!-- 3. Search Bar + Filter Button -->
+      <div class="bk-search-section">
+        <div class="bk-search-input-box">
+          <i data-lucide="search" style="width: 18px; height: 18px; color: #9CA3AF;"></i>
+          <input type="text" id="inboxSearchInput" placeholder="TrxID বা নাম্বার দিয়ে খুঁজুন" oninput="filterHistoryRealtime()">
+        </div>
+        <button class="bk-filter-btn" onclick="cycleHistoryFilter()">
+          <i data-lucide="sliders-horizontal" style="width: 16px; height: 16px;"></i>
+          <span id="currentFilterText">ফিল্টার</span>
+        </button>
+      </div>
+
+      <div class="bk-section-label" id="historyCountHeader">সকল লেনদেন</div>
+
+      <!-- 4. Transactions List -->
+      <div class="bk-txn-list" id="inboxTxnListContainer"></div>
+    </div>
+
+    <!-- 5. BOTTOM SLIP MODAL (হুবহু স্ক্রিনশটের মতো লেনদেনের স্লিপ) -->
+    <div class="bk-slip-overlay" id="bkSlipModal" onclick="closeTransactionSlip(event)">
+      <div class="bk-slip-card" onclick="event.stopPropagation()">
+        <div class="bk-slip-header">
+          <div class="bk-slip-title" id="slipTypeTitle">সেন্ড মানি</div>
+          <div class="bk-slip-close-txt" onclick="closeTransactionSlip()">বন্ধ</div>
+        </div>
+
+        <div class="bk-slip-grid">
+          <!-- একাউন্ট -->
+          <div class="bk-slip-item">
+            <span class="bk-slip-lbl">একাউন্ট</span>
+            <span class="bk-slip-val" id="slipAccNo">01XXXXXXXXX</span>
+          </div>
+
+          <!-- সময় -->
+          <div class="bk-slip-item">
+            <span class="bk-slip-lbl">সময়</span>
+            <span class="bk-slip-val" id="slipTime">--</span>
+          </div>
+
+          <!-- পরিমাণ -->
+          <div class="bk-slip-item">
+            <span class="bk-slip-lbl">পরিমাণ</span>
+            <span class="bk-slip-val" id="slipAmount">৳0.00</span>
+          </div>
+
+          <!-- চার্জ -->
+          <div class="bk-slip-item">
+            <span class="bk-slip-lbl">চার্জ</span>
+            <span class="bk-slip-val" id="slipCharge">৳০.০০</span>
+          </div>
+
+          <!-- ট্রানজেকশন আইডি -->
+          <div class="bk-slip-item" style="grid-column: span 2;">
+            <span class="bk-slip-lbl">ট্রানজেকশন আইডি</span>
+            <div class="bk-slip-val" style="cursor: pointer;" onclick="copySlipTrxId()" title="কপি করতে ক্লিক করুন">
+              <span id="slipTrxIdVal">DJ1890HCP0</span>
+              <i data-lucide="copy" style="width: 16px; height: 16px; color: #D12053;"></i>
+            </div>
+          </div>
+
+          <!-- রেফারেন্স -->
+          <div class="bk-slip-item" style="grid-column: span 2;">
+            <span class="bk-slip-lbl">রেফারেন্স</span>
+            <span class="bk-slip-val" id="slipRef">N/A</span>
+          </div>
+        </div>
+
+        <div class="bk-slip-actions">
+          <button class="bk-slip-btn" onclick="openTopupScreen(); closeTransactionSlip();">
+            <i data-lucide="repeat" style="width: 16px; height: 16px;"></i>
+            <span>সেন্ড মানি</span>
+          </button>
+          <button class="bk-slip-btn" onclick="shareTransactionSlip()">
+            <i data-lucide="share-2" style="width: 16px; height: 16px;"></i>
+            <span>শেয়ার</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="bottom-bar">
+      <button class="nav-item active" onclick="switchTab('home', this)" id="nav-btn-home">
+        <i data-lucide="home" style="width: 20px; height: 20px;"></i>
+        <span>হোম</span>
+      </button>
+
+      <button class="nav-item" onclick="switchTab('deals', this)" id="nav-btn-deals">
+        <i data-lucide="flame" style="width: 20px; height: 20px;"></i>
+        <span>ডিলস</span>
+      </button>
+
+      <div class="center-fab" onclick="openActionChoiceSheet()">
+        <i data-lucide="layout-grid" style="width: 24px; height: 24px;"></i>
+      </div>
+
+      <button class="nav-item" onclick="switchTab('discover', this)" id="nav-btn-discover">
+        <i data-lucide="compass" style="width: 20px; height: 20px;"></i>
+        <span>ডিসকভার</span>
+      </button>
+
+      <button class="nav-item" onclick="switchTab('shop', this)" id="nav-btn-shop">
+        <i data-lucide="shopping-bag" style="width: 20px; height: 20px;"></i>
+        <span>শপ</span>
+      </button>
+    </nav>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toastBox">
+      <i data-lucide="check-circle" style="color: var(--success); width: 18px; height: 18px;"></i>
+      <span id="toastMsg">সফল হয়েছে</span>
+    </div>
+  </div>
+
+  <!-- ================= JAVASCRIPT & FIREBASE REALTIME ENGINE ================= -->
+  <script>
+    // 1. FIREBASE CONFIGURATION
+    const firebaseConfig = {
+      apiKey: "AIzaSyBK2pQc0ZSGHJt2GZ53OJEhSmqyaNNhZYk",
+      authDomain: "pp90-991fb.firebaseapp.com",
+      databaseURL: "https://pp90-991fb-default-rtdb.firebaseio.com",
+      projectId: "pp90-991fb",
+      storageBucket: "pp90-991fb.firebasestorage.app",
+      messagingSenderId: "775611582158",
+      appId: "1:775611582158:web:8c7352d7aef1eea608f29f",
+      measurementId: "G-SZNG5KJSFZ"
+    };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    // Application Global State
+    const appState = {
+      authUid: null,        // Firebase Auth ID
+      numericUid: '',       // ৮-১০ ডিজিটের সংখ্যাযুক্ত UID
+      headerLogoUrl: 'https://i.supaimg.com/12d6d834-fa31-458b-b65a-26b1fb11f3c2/03ff80fb-fd92-4f22-a6e3-60c9a7392d66.png',
+      balance: 0.00,
+      dataGB: 0,
+      minutes: 0,
+      points: 0,
+      selectedMethod: 'nagad',
+      currentHomeCategory: 'all',
+      currentActiveCategory: '',
+      currentDealsCategory: '',
+      pendingRechargeAmount: 0,
+      selectedPackForDialog: null,
+      currentPackPurchaseTitle: '',
+      activeFilterMode: 'all', // 'all', 'debit', 'credit'
+      
+      userProfile: {
+        name: 'ব্যবহারকারী',
+        email: '',
+        phone: '',
+        pin: '',
+        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'
+      },
+
+      wallets: {
+        bkash: '01881334543',
+        nagad: '01918304788',
+        rocket: '01712345678',
+        upay: '01912345678'
+      },
+
+      categories: [],
+      packages: [],
+      discoverItems: [],
+      shopItems: [],
+      rechargeRequests: []
+    };
+
+    let phoneConfirmationResult = null;
+    let currentSelectedSlipTrxId = '';
+
+    // ইউনিক TrxID জেনারেটর (যেমন: DJ1890HCP0)
+    function generateUniqueTrxId() {
+      const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      let result = "D";
+      for (let i = 0; i < 9; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return result;
+    }
+
+    // সংখ্যাযুক্ত UID তৈরির ফাংশন (৮ ডিজিট)
+    function generateNumericUid() {
+      return String(Math.floor(10000000 + Math.random() * 90000000));
+    }
+
+    // সময় ফরম্যাটার (স্ক্রিনশটের মতো: 07:56pm 01/10/26)
+    function formatTxnDateTime(timestamp) {
+      const d = timestamp ? new Date(timestamp) : new Date();
+      let hours = d.getHours();
+      let minutes = d.getMinutes();
+      const ampm = hours >= 12 ? 'pm' : 'am';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      minutes = minutes < 10 ? '0' + minutes : minutes;
+      const strTime = (hours < 10 ? '0' + hours : hours) + ':' + minutes + ampm;
+
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = String(d.getFullYear()).slice(-2);
+
+      return `${strTime} ${day}/${month}/${year}`;
+    }
+
+    // 2. LIFECYCLE INITIALIZATION
+    document.addEventListener("DOMContentLoaded", () => {
+      lucide.createIcons();
+      setupRecaptcha();
+      startGatewayTimer();
+      listenToGlobalFirebaseData();
+
+      auth.onAuthStateChanged((user) => {
+        const authScreen = document.getElementById('authScreen');
+        const splash = document.getElementById('appSplashScreen');
+
+        if (user) {
+          appState.authUid = user.uid;
+          setupActiveUserSession(user);
+          authScreen.style.display = 'none';
+        } else {
+          authScreen.style.display = 'flex';
+        }
+
+        setTimeout(() => {
+          splash.classList.add('fade-out');
+          setTimeout(() => splash.style.display = 'none', 500);
+        }, 1200);
+      });
+    });
+
+    // 3. LISTEN TO GLOBAL DATA
+    function listenToGlobalFirebaseData() {
+      db.ref('settings').on('value', snap => {
+        const val = snap.val();
+        if (val) {
+          if (val.wallets) appState.wallets = val.wallets;
+          if (val.headerLogoUrl) {
+            appState.headerLogoUrl = val.headerLogoUrl;
+            document.getElementById('appHeaderLogo').src = val.headerLogoUrl;
+            document.getElementById('splashLogoImg').src = val.headerLogoUrl;
+            document.getElementById('authLogoImg').src = val.headerLogoUrl;
+          }
+          updateAgentNumberDisplay();
+        }
+      });
+
+      db.ref('categories').on('value', snap => {
+        const val = snap.val() || {};
+        appState.categories = Object.entries(val).map(([id, item]) => ({ id, ...item }));
+        
+        if (appState.categories.length > 0) {
+          if (!appState.currentActiveCategory) appState.currentActiveCategory = appState.categories[0].name;
+          if (!appState.currentDealsCategory) appState.currentDealsCategory = appState.categories[0].name;
+        }
+        renderHomeCategoryFilterBar();
+        renderCategoryBars();
+        renderDrawerMenuCategories();
+        renderFilteredPackages(appState.currentActiveCategory);
+        renderDealsPackages(appState.currentDealsCategory);
+      });
+
+      db.ref('packages').on('value', snap => {
+        const val = snap.val() || {};
+        appState.packages = Object.entries(val).map(([id, item]) => ({ id, ...item }));
+        renderHomePackages();
+        renderFilteredPackages(appState.currentActiveCategory);
+        renderDealsPackages(appState.currentDealsCategory);
+      });
+
+      db.ref('discover').on('value', snap => {
+        const val = snap.val() || {};
+        appState.discoverItems = Object.entries(val).map(([id, item]) => ({ id, ...item }));
+        renderDiscoverContent();
+      });
+
+      db.ref('shop').on('value', snap => {
+        const val = snap.val() || {};
+        appState.shopItems = Object.entries(val).map(([id, item]) => ({ id, ...item }));
+        renderShopContent();
+      });
+    }
+
+    // 4. ACTION SHEET CONTROLS
+    function openActionChoiceSheet() {
+      document.getElementById('actionChoiceSheet').classList.add('active');
+      lucide.createIcons();
+    }
+    function closeActionChoiceSheet() {
+      document.getElementById('actionChoiceSheet').classList.remove('active');
+    }
+    function selectChoiceAction(type) {
+      closeActionChoiceSheet();
+      if (type === 'recharge') {
+        openRechargeScreen();
+      } else if (type === 'topup') {
+        openTopupScreen();
+      }
+    }
+
+    // 5. TOP-UP / P2P TRANSFER
+    function openTopupScreen() {
+      document.getElementById('topupReceiverInput').value = '';
+      document.getElementById('topupAmount').value = '';
+      document.getElementById('topupPin').value = '';
+      document.getElementById('topupScreen').classList.add('active');
+      lucide.createIcons();
+    }
+    function closeTopupScreen() {
+      document.getElementById('topupScreen').classList.remove('active');
+    }
+
+    function cleanNumber(val) {
+      if(!val) return '';
+      let str = String(val).replace(/[^0-9]/g, '');
+      if (str.length > 11 && str.startsWith('880')) {
+        str = str.substring(2);
+      }
+      return str;
+    }
+
+    async function executeTopupTransfer() {
+      const receiverInput = document.getElementById('topupReceiverInput').value.trim();
+      const targetQuery = cleanNumber(receiverInput);
+      const amount = parseFloat(document.getElementById('topupAmount').value);
+      const inputPin = document.getElementById('topupPin').value.trim();
+
+      const currentSenderPin = String(appState.userProfile.pin || '').trim();
+      if (!currentSenderPin) {
+        showToast('প্রথমে প্রোফাইল থেকে ৪ ডিজিটের পিন সেট করুন!');
+        openProfileModal();
+        return;
+      }
+      if (inputPin !== currentSenderPin) {
+        showToast('ভুল পিন দিয়েছেন! সঠিক ৪ ডিজিট পিন দিন।');
+        return;
+      }
+
+      if (!targetQuery || targetQuery.length < 8) {
+        showToast('সঠিক UID বা মোবাইল নম্বর লিখুন!');
+        return;
+      }
+      if (!amount || amount < 10) {
+        showToast('সর্বনিম্ন ১০ টাকা পাঠাতে পারবেন!');
+        return;
+      }
+      if (amount > appState.balance) {
+        showToast('আপনার অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স নেই!');
+        return;
+      }
+
+      if (targetQuery === String(appState.numericUid) || targetQuery === cleanNumber(appState.userProfile.phone)) {
+        showToast('নিজের অ্যাকাউন্টে ব্যালেন্স পাঠানো যাবে না!');
+        return;
+      }
+
+      showToast('অ্যাকাউন্ট ভেরিফাই হচ্ছে...');
+
+      try {
+        const snap = await db.ref('users').once('value');
+        const allUsers = snap.val() || {};
+        
+        let receiverAuthKey = null;
+        let receiverData = null;
+
+        for (const [key, userObj] of Object.entries(allUsers)) {
+          if (key !== appState.authUid && userObj) {
+            const userNumUid = String(userObj.numericUid || '');
+            const userPhone = cleanNumber(userObj.phone || '');
+
+            if (userNumUid === targetQuery || (userPhone && userPhone === targetQuery)) {
+              receiverAuthKey = key;
+              receiverData = userObj;
+              break;
+            }
+          }
+        }
+
+        if (!receiverAuthKey || !receiverData) {
+          showToast('এই UID বা নম্বরে কোনো অ্যাকাউন্ট পাওয়া যায়নি!');
+          return;
+        }
+
+        // ব্যালেন্স কাটা
+        const deductResult = await db.ref(`users/${appState.authUid}/balance`).transaction(curr => {
+          const currentBal = Number(curr) || 0;
+          if (currentBal < amount) return;
+          return currentBal - amount;
+        });
+
+        if (!deductResult.committed) {
+          showToast('লেনদেন ব্যর্থ হয়েছে! ব্যালেন্স পরীক্ষা করুন।');
+          return;
+        }
+
+        // ব্যালেন্স যোগ
+        await db.ref(`users/${receiverAuthKey}/balance`).transaction(curr => {
+          return (Number(curr) || 0) + amount;
+        });
+
+        // নতুন ইউনিক TrxID জেনারেশন
+        const newUniqueTrx = generateUniqueTrxId();
+        const now = Date.now();
+
+        // প্রেরকের হিস্ট্রি (খরচ / লাল - ৳)
+        await db.ref('recharges').push({
+          uid: appState.authUid,
+          direction: 'debit',
+          txnType: 'send_money',
+          amount: amount,
+          mobile: receiverInput,
+          accountNo: receiverData.phone || receiverData.numericUid || receiverInput,
+          method: 'টপ-আপ সেন্ড',
+          txnId: newUniqueTrx,
+          packTitle: 'সেন্ড মানি',
+          charge: 0.00,
+          status: 'approved',
+          credited: true,
+          timestamp: now
+        });
+
+        // প্রাপকের হিস্ট্রি (আয় / সবুজ + ৳)
+        await db.ref('recharges').push({
+          uid: receiverAuthKey,
+          direction: 'credit',
+          txnType: 'received_money',
+          amount: amount,
+          mobile: appState.userProfile.phone || appState.numericUid,
+          accountNo: appState.userProfile.phone || appState.numericUid,
+          method: 'টপ-আপ রিসিভ',
+          txnId: newUniqueTrx,
+          packTitle: 'রিসিভড মানি',
+          charge: 0.00,
+          status: 'approved',
+          credited: true,
+          timestamp: now
+        });
+
+        showToast(`৳${amount} সফলভাবে পাঠানো হয়েছে! TrxID: ${newUniqueTrx}`);
+        closeTopupScreen();
+
+      } catch (err) {
+        showToast('সমস্যা হয়েছে: ' + err.message);
+      }
+    }
+
+    // 6. CLIPBOARD COPY HELPERS
+    function copyTextToClipboard(text) {
+      if (!text) return Promise.reject();
+      if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
+      } else {
+        return fallbackCopy(text);
+      }
+    }
+
+    function fallbackCopy(text) {
+      return new Promise((resolve, reject) => {
+        try {
+          const textArea = document.createElement("textarea");
+          textArea.value = text;
+          textArea.style.position = "fixed";
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          const success = document.execCommand('copy');
+          document.body.removeChild(textArea);
+          if (success) resolve();
+          else reject();
+        } catch (err) {
+          reject(err);
+        }
+      });
+    }
+
+    function copyUserUID() {
+      const uid = appState.numericUid;
+      if (!uid) return;
+      copyTextToClipboard(uid).then(() => {
+        showToast(`UID কপি হয়েছে: ${uid}`);
+      });
+    }
+
+    function copySlipTrxId() {
+      if (!currentSelectedSlipTrxId) return;
+      copyTextToClipboard(currentSelectedSlipTrxId).then(() => {
+        showToast(`TrxID কপি হয়েছে: ${currentSelectedSlipTrxId}`);
+      });
+    }
+
+    function copyAgentNumber() {
+      const numEl = document.getElementById('gw-agent-number');
+      const num = numEl.innerText.trim();
+      const bubble = document.getElementById('copyBubble');
+      const icon = document.getElementById('copyIconEl');
+
+      if (!num || num === 'লোড হচ্ছে...') return;
+
+      copyTextToClipboard(num).then(() => {
+        showToast(`নম্বর কপি হয়েছে: ${num}`);
+        if (bubble && icon) {
+          bubble.style.background = '#10B981';
+          icon.style.color = '#FFFFFF';
+          icon.setAttribute('data-lucide', 'check');
+          lucide.createIcons();
+
+          setTimeout(() => {
+            bubble.style.background = '#FFF';
+            icon.style.color = '#475569';
+            icon.setAttribute('data-lucide', 'copy');
+            lucide.createIcons();
+          }, 2000);
+        }
+      });
+    }
+
+    // 7. USER PROFILE & LIVE BALANCE SYNC
+    function setupActiveUserSession(user) {
+      const userDbRef = db.ref(`users/${user.uid}`);
+      
+      userDbRef.on('value', snap => {
+        const u = snap.val();
+        if (u) {
+          if (!u.numericUid) {
+            const newNumUid = generateNumericUid();
+            userDbRef.update({ numericUid: newNumUid });
+            appState.numericUid = newNumUid;
+          } else {
+            appState.numericUid = String(u.numericUid);
+          }
+
+          appState.balance = Number(u.balance) || 0;
+          appState.dataGB = Number(u.dataGB) || 0;
+          appState.minutes = Number(u.minutes) || 0;
+          appState.points = Number(u.points) || 0;
+          appState.userProfile.name = u.name || user.displayName || 'ব্যবহারকারী';
+          appState.userProfile.phone = u.phone || user.phoneNumber || '';
+          appState.userProfile.pin = u.pin !== undefined ? String(u.pin) : '';
+          appState.userProfile.email = u.email || user.email || '';
+          if (u.avatar) appState.userProfile.avatar = u.avatar;
+        } else {
+          const generatedUid = generateNumericUid();
+          appState.numericUid = generatedUid;
+          const initialData = {
+            numericUid: generatedUid,
+            name: user.displayName || 'ব্যবহারকারী',
+            phone: user.phoneNumber || '',
+            pin: '',
+            email: user.email || '',
+            balance: 0,
+            dataGB: 0,
+            minutes: 0,
+            points: 0,
+            avatar: user.photoURL || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+            createdAt: Date.now()
+          };
+          userDbRef.set(initialData);
+        }
+
+        document.getElementById('rcMobileInput').value = appState.userProfile.phone;
+        updateUserProfileDisplays();
+        updateDashboardDisplays();
+      });
+
+      // LISTEN TO TRANSACTIONS & RECHARGES
+      db.ref('recharges').orderByChild('uid').equalTo(user.uid).on('value', snap => {
+        const data = snap.val() || {};
+        appState.rechargeRequests = Object.entries(data).map(([id, r]) => ({ id, ...r })).reverse();
+        
+        // Auto Credit Logic
+        Object.entries(data).forEach(([key, item]) => {
+          if (item.status === 'approved' && !item.credited) {
+            db.ref(`users/${user.uid}/balance`).transaction(curr => (Number(curr) || 0) + Number(item.amount));
+            db.ref(`recharges/${key}/credited`).set(true);
+            showToast(`৳${item.amount} সফলভাবে যোগ করা হয়েছে!`);
+          }
+        });
+
+        renderInboxTransactionsList(appState.rechargeRequests);
+      });
+    }
+
+    function saveUserProfile() {
+      const p = appState.userProfile;
+      const newName = document.getElementById('profName').value.trim() || p.name;
+      const newPhone = document.getElementById('profPhone').value.trim();
+      const newPin = document.getElementById('profPin').value.trim();
+      const newEmail = document.getElementById('profEmail').value.trim() || p.email;
+      const newAvatar = document.getElementById('profAvatarUrl').value.trim() || p.avatar;
+
+      if (newPin && (newPin.length !== 4 || isNaN(newPin))) {
+        showToast('পিন অবশ্যই ৪ ডিজিটের সংখ্যা হতে হবে!');
+        return;
+      }
+
+      if (appState.authUid) {
+        db.ref(`users/${appState.authUid}`).update({
+          name: newName,
+          phone: newPhone,
+          pin: newPin || p.pin,
+          email: newEmail,
+          avatar: newAvatar
+        }).then(() => {
+          closeProfileModal();
+          showToast('প্রোফাইল ও পিন সংরক্ষিত হয়েছে!');
+        });
+      }
+    }
+
+    // 8. PAYMENT GATEWAY CONTROLS
+    function selectPaymentMethod(method) {
+      appState.selectedMethod = method;
+      document.querySelectorAll('.rs-method-pill').forEach(p => p.classList.remove('active'));
+      const target = document.getElementById(`pay-${method}`);
+      if(target) target.classList.add('active');
+    }
+
+    function proceedToPaymentGateway() {
+      const amtInput = document.getElementById('rs-big-amt');
+      const amt = parseFloat(amtInput.value);
+      if(!amt || amt < 10 || amt > 25000) {
+        showToast('১০ থেকে ২৫,০০০ টাকার মধ্যে লিখুন');
+        return;
+      }
+      appState.currentPackPurchaseTitle = 'ব্যালেন্স রিচার্জ';
+      openPaymentGateway(amt, appState.selectedMethod);
+    }
+
+    function openPaymentGateway(amt, method, itemTitle = '') {
+      appState.pendingRechargeAmount = amt;
+      const gw = document.getElementById('paymentGatewayScreen');
+      const methodLabel = document.getElementById('gw-method-name');
+      const step2Provider = document.getElementById('gw-step2-provider');
+      const formattedAmt = amt.toFixed(2);
+
+      document.getElementById('gw-disp-amount').innerText = `BDT ${formattedAmt}`;
+      document.getElementById('gw-txnid-input').value = '';
+
+      gw.classList.remove('gw-theme-nagad', 'gw-theme-bkash', 'gw-theme-rocket', 'gw-theme-upay');
+
+      if(method === 'bkash') {
+        gw.classList.add('gw-theme-bkash');
+        methodLabel.innerText = "বিকাশ";
+        step2Provider.innerText = "BKASH";
+      } else if(method === 'rocket') {
+        gw.classList.add('gw-theme-rocket');
+        methodLabel.innerText = "রকেট";
+        step2Provider.innerText = "ROCKET";
+      } else if(method === 'upay') {
+        gw.classList.add('gw-theme-upay');
+        methodLabel.innerText = "উপায়";
+        step2Provider.innerText = "UPAY";
+      } else {
+        gw.classList.add('gw-theme-nagad');
+        methodLabel.innerText = "নগদ";
+        step2Provider.innerText = "NAGAD";
+      }
+
+      updateAgentNumberDisplay();
+      gw.classList.add('active');
+      lucide.createIcons();
+    }
+
+    function updateAgentNumberDisplay() {
+      const method = appState.selectedMethod;
+      const agentEl = document.getElementById('gw-agent-number');
+      if (agentEl && appState.wallets) {
+        agentEl.innerText = appState.wallets[method] || '01XXXXXXXXX';
+      }
+    }
+
+    function submitRechargeRequestToAdmin() {
+      const txn = document.getElementById('gw-txnid-input').value.trim();
+      const mobileInput = document.getElementById('rcMobileInput').value.trim() || appState.userProfile.phone;
+      
+      if(!txn || txn.length < 5) {
+        showToast('সঠিক Transaction ID দিন!');
+        return;
+      }
+      if(!mobileInput) {
+        showToast('মোবাইল নম্বর প্রদান করুন!');
+        return;
+      }
+
+      const rechargeData = {
+        uid: appState.authUid,
+        numericUid: appState.numericUid,
+        direction: 'credit',
+        amount: appState.pendingRechargeAmount,
+        mobile: mobileInput,
+        accountNo: mobileInput,
+        method: appState.selectedMethod,
+        txnId: txn,
+        packTitle: appState.currentPackPurchaseTitle || 'ব্যালেন্স রিচার্জ',
+        charge: 0.00,
+        status: 'pending',
+        credited: false,
+        timestamp: Date.now()
+      };
+
+      db.ref('recharges').push(rechargeData).then(() => {
+        showToast('রিকোয়েস্ট সফলভাবে জমা হয়েছে!');
+        closePaymentGateway();
+        closeRechargeScreen();
+      }).catch(err => {
+        showToast('জমা দেওয়া যায়নি: ' + err.message);
+      });
+    }
+
+    // 9. BKASH INBOX / TRANSACTIONS REALTIME ENGINE
+    function renderInboxTransactionsList(items) {
+      const container = document.getElementById('inboxTxnListContainer');
+      if (!container) return;
+
+      if (!items || items.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:45px 20px; color:#9CA3AF; font-weight:700;">কোনো লেনদেন রেকর্ড পাওয়া যায়নি</div>`;
+        return;
+      }
+
+      container.innerHTML = items.map((r, index) => {
+        const isDebit = (r.direction === 'debit' || r.txnType === 'send_money' || r.packTitle?.includes('ক্রয়') || r.packTitle?.includes('প্যাক'));
+        const sign = isDebit ? '- ' : '+ ';
+        const amtClass = isDebit ? 'bk-amt-debit' : 'bk-amt-credit';
+        const formattedAmount = `${sign}৳${Number(r.amount || 0).toFixed(2)}`;
+
+        const avatarColors = ['bk-circle-purple', 'bk-circle-olive', 'bk-circle-cyan', 'bk-circle-green'];
+        const avatarColorClass = avatarColors[index % avatarColors.length];
+
+        const title = r.packTitle || (isDebit ? 'সেন্ড মানি' : 'রিসিভড মানি');
+        const accDisplay = r.accountNo || r.mobile || '01XXXXXXXXX';
+        const formattedTime = formatTxnDateTime(r.timestamp);
+        const trxIdDisp = r.txnId || 'N/A';
+
+        return `
+          <div class="bk-txn-row" onclick='openTransactionSlipModal(${JSON.stringify(r)})'>
+            <div class="bk-txn-left">
+              <div class="bk-circle-avatar ${avatarColorClass}">
+                O
+              </div>
+              <div class="bk-txn-details">
+                <div class="bk-txn-title">${title}</div>
+                <div class="bk-txn-sub">${accDisplay}</div>
+                <div class="bk-txn-id-sub">TrxID : ${trxIdDisp}</div>
+              </div>
+            </div>
+
+            <div class="bk-txn-right">
+              <div class="${amtClass}">${formattedAmount}</div>
+              <div class="bk-txn-time">
+                <span>${formattedTime}</span>
+                <i data-lucide="chevron-right" style="width: 14px; height: 14px; color: #9CA3AF;"></i>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function filterHistoryRealtime() {
+      const q = document.getElementById('inboxSearchInput').value.trim().toLowerCase();
+      let list = appState.rechargeRequests;
+
+      if (appState.activeFilterMode === 'debit') {
+        list = list.filter(r => (r.direction === 'debit' || r.txnType === 'send_money' || r.packTitle?.includes('ক্রয়')));
+      } else if (appState.activeFilterMode === 'credit') {
+        list = list.filter(r => !(r.direction === 'debit' || r.txnType === 'send_money' || r.packTitle?.includes('ক্রয়')));
+      }
+
+      if (q) {
+        list = list.filter(r => {
+          const tid = (r.txnId || '').toLowerCase();
+          const acc = (r.accountNo || r.mobile || '').toLowerCase();
+          const title = (r.packTitle || '').toLowerCase();
+          return tid.includes(q) || acc.includes(q) || title.includes(q);
+        });
+      }
+
+      renderInboxTransactionsList(list);
+    }
+
+    function cycleHistoryFilter() {
+      if (appState.activeFilterMode === 'all') {
+        appState.activeFilterMode = 'credit';
+        document.getElementById('currentFilterText').innerText = 'রিসিভ (+)';
+        document.getElementById('historyCountHeader').innerText = 'রিসিভড মানি ও রিচার্জ';
+      } else if (appState.activeFilterMode === 'credit') {
+        appState.activeFilterMode = 'debit';
+        document.getElementById('currentFilterText').innerText = 'খরচ (-)';
+        document.getElementById('historyCountHeader').innerText = 'খরচ ও সেন্ড মানি';
+      } else {
+        appState.activeFilterMode = 'all';
+        document.getElementById('currentFilterText').innerText = 'ফিল্টার';
+        document.getElementById('historyCountHeader').innerText = 'সকল লেনদেন';
+      }
+      filterHistoryRealtime();
+    }
+
+    function switchInboxTab(type) {
+      document.getElementById('tabNavTxn').classList.toggle('active', type === 'txn');
+      document.getElementById('tabNavNotif').classList.toggle('active', type === 'notif');
+
+      if (type === 'notif') {
+        document.getElementById('inboxTxnListContainer').innerHTML = `
+          <div style="padding: 24px; text-align: center; color: #6B7280; font-size: 14px; font-weight: 700;">
+            নতুন কোনো নোটিফিকেশন নেই
+          </div>
+        `;
+      } else {
+        renderInboxTransactionsList(appState.rechargeRequests);
+      }
+    }
+
+    function openTransactionSlipModal(txn) {
+      currentSelectedSlipTrxId = txn.txnId || 'N/A';
+      document.getElementById('slipTypeTitle').innerText = txn.packTitle || 'লেনদেনের বিবরণ';
+      document.getElementById('slipAccNo').innerText = txn.accountNo || txn.mobile || '01XXXXXXXXX';
+      document.getElementById('slipTime').innerText = formatTxnDateTime(txn.timestamp);
+      document.getElementById('slipAmount').innerText = `৳${Number(txn.amount || 0).toFixed(2)}`;
+      document.getElementById('slipCharge').innerText = `৳${Number(txn.charge || 0).toFixed(2)}`;
+      document.getElementById('slipTrxIdVal').innerText = currentSelectedSlipTrxId;
+      document.getElementById('slipRef').innerText = txn.method || 'ওয়ালেট';
+
+      document.getElementById('bkSlipModal').classList.add('active');
+      lucide.createIcons();
+    }
+
+    function closeTransactionSlip() {
+      document.getElementById('bkSlipModal').classList.remove('active');
+    }
+
+    function shareTransactionSlip() {
+      const shareData = {
+        title: 'Transaction Slip',
+        text: `লেনদেন বিবরণ:\nঅ্যাকাউন্ট: ${document.getElementById('slipAccNo').innerText}\nপরিমাণ: ${document.getElementById('slipAmount').innerText}\nTrxID: ${currentSelectedSlipTrxId}`
+      };
+      if (navigator.share) {
+        navigator.share(shareData).catch(() => {});
+      } else {
+        copySlipTrxId();
+      }
+    }
+
+    // 10. MULTI-CATEGORY & PACKAGES RENDERING
+    function renderHomeCategoryFilterBar() {
+      const bar = document.getElementById('homeCategoryFilterBar');
+      if (!bar) return;
+
+      let html = `<div class="home-cat-pill ${appState.currentHomeCategory === 'all' ? 'active' : ''}" onclick="filterHomePackages('all')">সব অফার</div>`;
+
+      appState.categories.forEach(cat => {
+        const isActive = appState.currentHomeCategory === cat.name;
+        html += `
+          <div class="home-cat-pill ${isActive ? 'active' : ''}" onclick="filterHomePackages('${cat.name}')">
+            <i data-lucide="${cat.icon || 'star'}" style="width: 14px; height: 14px;"></i>
+            <span>${cat.name}</span>
+          </div>
+        `;
+      });
+
+      bar.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    function filterHomePackages(catName) {
+      appState.currentHomeCategory = catName;
+      renderHomeCategoryFilterBar();
+      renderHomePackages();
+    }
+
+    function renderHomePackages() {
+      const list = document.getElementById('home-dynamic-packages');
+      if (!list) return;
+
+      let filtered = appState.packages;
+      if (appState.currentHomeCategory !== 'all') {
+        filtered = filtered.filter(p => p.category === appState.currentHomeCategory);
+      }
+
+      if (filtered.length === 0) {
+        list.innerHTML = `<div style="text-align:center; padding:24px; color:#94A3B8; font-size:13px; font-weight:600;">কোনো অফার পাওয়া যায়নি</div>`;
+        return;
+      }
+
+      list.innerHTML = filtered.map(p => `
+        <div class="card" style="margin: 0 0 10px 0; padding: 16px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <span style="font-size: 11px; background: rgba(237, 28, 36, 0.1); color: var(--primary); padding: 2px 8px; border-radius: 6px; font-weight: 700;">${p.category || 'অফার'}</span>
+            <h4 style="font-size: 15px; font-weight: 800; margin-top: 4px;">${p.title}</h4>
+            <span style="font-size: 12px; color: var(--text-muted); font-weight: 600;">মেয়াদ: ${p.validity}</span>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 17px; font-weight: 800; color: var(--text); margin-bottom: 6px;">৳${p.price}</div>
+            <button class="btn-pill" style="padding: 6px 14px; font-size: 12px;" onclick="handlePackageBuyClick('${p.id}')">কিনুন</button>
+          </div>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function renderCategoryBars() {
+      const renderBar = (containerId, currentActive, clickFn) => {
+        const container = document.getElementById(containerId);
+        if(!container) return;
+        if(appState.categories.length === 0) {
+          container.innerHTML = `<div style="padding:10px; color:#94A3B8; font-size:12px;">কোনো ক্যাটাগরি নেই</div>`;
+          return;
+        }
+        container.innerHTML = appState.categories.map(cat => {
+          const isActive = cat.name === currentActive;
+          return `
+            <div class="rs-cat-item ${isActive ? 'active' : ''}" onclick="${clickFn}('${cat.name}')">
+              <i data-lucide="${cat.icon || 'star'}" style="color: ${isActive ? '#ED1C24' : (cat.color || '#3B82F6')};"></i>
+              <span>${cat.name}</span>
+            </div>
+          `;
+        }).join('');
+      };
+      renderBar('dynamicCategoryBar', appState.currentActiveCategory, 'selectRechargeCat');
+      renderBar('dealsCategoryBar', appState.currentDealsCategory, 'selectDealsCat');
+      lucide.createIcons();
+    }
+
+    function selectRechargeCat(catName) {
+      appState.currentActiveCategory = catName;
+      document.getElementById('category-heading-title').innerText = `${catName} প্যাকেজ সমূহ`;
+      renderCategoryBars();
+      renderFilteredPackages(catName);
+    }
+
+    function selectDealsCat(catName) {
+      appState.currentDealsCategory = catName;
+      renderCategoryBars();
+      renderDealsPackages(catName);
+    }
+
+    function renderDrawerMenuCategories() {
+      const container = document.getElementById('drawerCategoryList');
+      if (!container) return;
+      container.innerHTML = appState.categories.map(cat => `
+        <div class="drawer-cat-item" onclick="openCategoryFromDrawer('${cat.name}')">
+          <i data-lucide="${cat.icon || 'star'}" style="color: ${cat.color || 'var(--primary)'}; width: 18px; height: 18px;"></i>
+          <span>${cat.name}</span>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function openCategoryFromDrawer(catName) {
+      closeDrawerMenu();
+      switchTab('deals');
+      selectDealsCat(catName);
+    }
+
+    function renderFilteredPackages(catName) {
+      const container = document.getElementById('categoryPackagesPreview');
+      const filtered = appState.packages.filter(p => !catName || p.category === catName);
+
+      if(filtered.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:18px; color:#94A3B8; font-size:13px; font-weight:600;">কোনো প্যাকেজ নেই</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(p => `
+        <div class="package-mini-card" onclick="setRsAmt(${p.price})">
+          <div>
+            <div class="package-mini-title">${p.title}</div>
+            <div class="package-mini-sub">মেয়াদ: ${p.validity}</div>
+          </div>
+          <div class="package-mini-price">৳${p.price}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderDealsPackages(catName) {
+      const container = document.getElementById('deals-full-container');
+      const filtered = appState.packages.filter(p => !catName || p.category === catName);
+
+      if(filtered.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:20px; color:#94A3B8;">কোনো অফার পাওয়া যায়নি</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(p => `
+        <div class="card" style="margin: 0 0 12px 0; padding: 18px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <span style="font-size: 11px; background: rgba(237, 28, 36, 0.1); color: var(--primary); padding: 3px 8px; border-radius: 6px; font-weight: 700;">${p.category}</span>
+            <h4 style="font-size: 16px; font-weight: 800; margin-top: 5px;">${p.title}</h4>
+            <span style="font-size: 12px; color: var(--text-muted); font-weight: 600;">মেয়াদ: ${p.validity}</span>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 18px; font-weight: 800; color: var(--text); margin-bottom: 6px;">৳${p.price}</div>
+            <button class="btn-pill" style="padding: 8px 18px; font-size: 13px;" onclick="handlePackageBuyClick('${p.id}')">কিনুন</button>
+          </div>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    // 11. PURCHASE PACK FLOW
+    function handlePackageBuyClick(packId) {
+      const pack = appState.packages.find(p => p.id === packId || p.id == packId);
+      if(!pack) return;
+
+      if(appState.balance >= pack.price) {
+        appState.selectedPackForDialog = pack;
+        openPurchaseConfirmDialog(pack);
+      } else {
+        appState.currentPackPurchaseTitle = pack.title;
+        showToast(`পর্যাপ্ত ব্যালেন্স নেই! ৳${pack.price} রিচার্জ করুন`);
+        openPaymentGateway(pack.price, appState.selectedMethod, pack.title);
+      }
+    }
+
+    function executePurchaseStepSuccess() {
+      const pack = appState.selectedPackForDialog;
+      if(!pack || !appState.authUid) return;
+
+      const newBal = (appState.balance - pack.price);
+      const newGB = (appState.dataGB + (pack.gb || 0));
+      const newMin = (appState.minutes + (pack.min || 0));
+      const earnedPoints = Math.floor(pack.price * 0.1);
+      const newPoints = (appState.points + earnedPoints);
+
+      db.ref(`users/${appState.authUid}`).update({
+        balance: newBal,
+        dataGB: newGB,
+        minutes: newMin,
+        points: newPoints,
+        lastPackPurchased: pack.title,
+        lastUpdated: Date.now()
+      }).then(() => {
+        // প্যাক কেনার কারণে খরচ হিস্ট্রি (লাল - ৳)
+        const packTrxId = generateUniqueTrxId();
+        db.ref('recharges').push({
+          uid: appState.authUid,
+          direction: 'debit',
+          txnType: 'package_purchase',
+          amount: pack.price,
+          accountNo: appState.userProfile.phone || appState.numericUid,
+          packTitle: `${pack.title} ক্রয়`,
+          method: 'প্যাক ক্রয়',
+          txnId: packTrxId,
+          charge: 0.00,
+          status: 'approved',
+          credited: true,
+          timestamp: Date.now()
+        });
+
+        document.getElementById('pd-step-ok').style.display = 'none';
+        document.getElementById('pd-success-sub').innerText = `${pack.title} সফলভাবে সক্রিয় করা হয়েছে!`;
+        document.getElementById('pd-success-points').innerText = `+${earnedPoints} এলিট পয়েন্ট যোগ হয়েছে!`;
+        document.getElementById('pd-step-success').style.display = 'block';
+        lucide.createIcons();
+      });
+    }
+
+    // 12. DISCOVER & SHOP
+    function renderDiscoverContent() {
+      const container = document.getElementById('discoverItemsContainer');
+      if (appState.discoverItems.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:20px; color:#94A3B8;">কোনো আইটেম পাওয়া যায়নি</div>`;
+        return;
+      }
+      container.innerHTML = appState.discoverItems.map(item => `
+        <div class="card" style="margin: 0 0 14px 0; padding: 0; overflow: hidden; cursor: pointer;" onclick="window.open('${item.url}', '_blank')">
+          <img src="${item.img || 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=500'}" style="width: 100%; height: 140px; object-fit: cover;">
+          <div style="padding: 14px; display: flex; justify-content: space-between; align-items: center;">
+            <h4 style="font-weight: 800; font-size: 16px;">${item.title}</h4>
+            <span style="color: var(--primary); font-weight: 700; font-size: 13px;">ওপেন করুন ↗</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderShopContent() {
+      const container = document.getElementById('shopItemsContainer');
+      if (appState.shopItems.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:20px; color:#94A3B8;">শপে কোনো পণ্য নেই</div>`;
+        return;
+      }
+      container.innerHTML = appState.shopItems.map(item => `
+        <div class="card" style="margin: 0 0 14px 0; padding: 14px; display: flex; gap: 14px; align-items: center; cursor: pointer;" onclick="window.open('${item.link || '#'}', '_blank')">
+          <img src="${item.img}" style="width: 80px; height: 80px; border-radius: 14px; object-fit: cover;">
+          <div style="flex: 1;">
+            <h4 style="font-weight: 800; font-size: 16px;">${item.title}</h4>
+            <div style="color: var(--primary); font-weight: 800; font-size: 16px; margin: 4px 0;">${item.price}</div>
+            <button class="btn-pill" style="padding: 6px 14px; font-size: 12px; margin-top: 4px;">অর্ডার করুন</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function updateDashboardDisplays() {
+      document.getElementById('disp-balance').innerText = Number(appState.balance || 0).toFixed(2);
+      document.getElementById('disp-data').innerText = appState.dataGB;
+      document.getElementById('disp-min').innerText = appState.minutes;
+      document.getElementById('disp-points').innerText = appState.points;
+    }
+
+    function updateUserProfileDisplays() {
+      const p = appState.userProfile;
+      const numUid = appState.numericUid || '...';
+      document.getElementById('user-mobile-display').innerText = p.name || 'ব্যবহারকারী';
+      document.getElementById('drawerUserName').innerText = p.name || 'ব্যবহারকারী';
+      document.getElementById('drawerUserPhone').innerText = p.phone || 'নম্বর যুক্ত নেই';
+      document.getElementById('drawerUserUid').innerText = numUid;
+      document.getElementById('homeUidBadge').innerText = `UID: ${numUid}`;
+      document.getElementById('profUidDisp').innerText = numUid;
+      document.getElementById('drawerAvatarImg').src = p.avatar;
+    }
+
+    // MODAL CONTROLS & HELPERS
+    function openPurchaseConfirmDialog(pack) {
+      document.getElementById('pd-info-name').innerText = pack.title;
+      document.getElementById('pd-info-val').innerText = pack.validity;
+      document.getElementById('pd-info-price').innerText = `৳ ${pack.price}`;
+      document.getElementById('pd-step-confirm').style.display = 'block';
+      document.getElementById('pd-step-ok').style.display = 'none';
+      document.getElementById('pd-step-success').style.display = 'none';
+      document.getElementById('purchaseDialogModal').classList.add('active');
+      lucide.createIcons();
+    }
+
+    function cancelPurchaseFlow() {
+      document.getElementById('purchaseDialogModal').classList.remove('active');
+    }
+    function proceedToStepOk() {
+      document.getElementById('pd-step-confirm').style.display = 'none';
+      document.getElementById('pd-step-ok').style.display = 'block';
+      lucide.createIcons();
+    }
+    function goToHomePageFromSuccess() {
+      document.getElementById('purchaseDialogModal').classList.remove('active');
+      switchTab('home');
+    }
+
+    function setupRecaptcha() {
+      try {
+        if (!window.recaptchaVerifier) {
+          window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+            'size': 'invisible',
+            'callback': (response) => {}
+          });
+        }
+      } catch (err) {}
+    }
+
+    function loginWithGoogle() {
+      showToast('Google সংযোগ করা হচ্ছে...');
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider).catch(e => showToast(e.message));
+    }
+
+    function sendFirebaseOtp() {
+      const phoneNumber = document.getElementById('authPhoneNumber').value.trim();
+      if (!phoneNumber || phoneNumber.length < 11) {
+        showToast('সঠিক মোবাইল নম্বর লিখুন');
+        return;
+      }
+      setupRecaptcha();
+      auth.signInWithPhoneNumber(phoneNumber, window.recaptchaVerifier)
+        .then(res => {
+          phoneConfirmationResult = res;
+          document.getElementById('otpSection').style.display = 'block';
+          showToast('OTP কোড পাঠানো হয়েছে!');
+        }).catch(err => showToast(err.message));
+    }
+
+    function verifyFirebaseOtp() {
+      const code = document.getElementById('authOtpCode').value.trim();
+      if (!code || !phoneConfirmationResult) return;
+      phoneConfirmationResult.confirm(code).then(() => {
+        showToast('ভেরিফিকেশন সফল!');
+      }).catch(() => showToast('ভুল OTP কোড!'));
+    }
+
+    function userLogout() {
+      closeDrawerMenu();
+      auth.signOut();
+    }
+
+    function openRechargeScreen() {
+      document.getElementById('rcMobileInput').value = appState.userProfile.phone || '';
+      document.getElementById('rechargeScreen').classList.add('active');
+      lucide.createIcons();
+    }
+    function closeRechargeScreen() {
+      document.getElementById('rechargeScreen').classList.remove('active');
+    }
+    function closePaymentGateway() {
+      document.getElementById('paymentGatewayScreen').classList.remove('active');
+    }
+    function setRsAmt(amt) {
+      document.getElementById('rs-big-amt').value = amt;
+    }
+    function openHistoryModal() {
+      document.getElementById('historyModal').classList.add('active');
+      renderInboxTransactionsList(appState.rechargeRequests);
+      lucide.createIcons();
+    }
+    function closeHistoryModal() {
+      document.getElementById('historyModal').classList.remove('active');
+    }
+    function openProfileModal() {
+      closeDrawerMenu();
+      const p = appState.userProfile;
+      document.getElementById('profName').value = p.name;
+      document.getElementById('profPhone').value = p.phone || '';
+      document.getElementById('profPin').value = p.pin || '';
+      document.getElementById('profEmail').value = p.email;
+      document.getElementById('profAvatarUrl').value = p.avatar;
+      document.getElementById('editAvatarPreview').src = p.avatar;
+      document.getElementById('profileModal').classList.add('active');
+    }
+    function closeProfileModal() {
+      document.getElementById('profileModal').classList.remove('active');
+    }
+    function openDrawerMenu() {
+      document.getElementById('drawerOverlay').classList.add('active');
+    }
+    function closeDrawerMenu() {
+      document.getElementById('drawerOverlay').classList.remove('active');
+    }
+
+    function switchTab(tabId, btn) {
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      const target = document.getElementById(`tab-${tabId}`);
+      if(target) target.classList.add('active');
+
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      const navBtn = btn || document.getElementById(`nav-btn-${tabId}`);
+      if(navBtn) navBtn.classList.add('active');
+
+      lucide.createIcons();
+    }
+
+    function startGatewayTimer() {
+      let duration = 59 * 60 + 31;
+      setInterval(() => {
+        if(duration > 0) {
+          duration--;
+          const m = Math.floor(duration / 60);
+          const s = duration % 60;
+          document.getElementById('gw-timer').innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+      }, 1000);
+    }
+
+    function toggleTheme() {
+      const cur = document.documentElement.getAttribute('data-theme');
+      document.documentElement.setAttribute('data-theme', cur === 'light' ? 'dark' : 'light');
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toastBox');
+      document.getElementById('toastMsg').innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2800);
+    }
+  </script>
+</body>
+</html>
